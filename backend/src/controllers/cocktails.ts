@@ -47,3 +47,57 @@ export const createCocktail = async (
         });
     }
 };
+
+export const getCocktails = async (
+    req: AuthRequest,
+    res: Response,
+) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                message: 'Unauthorized',
+            });
+        }
+
+        const filter = req.user.role === 'admin' ? {} : { published: true };
+
+        const cocktails = await Cocktail.find(filter)
+            .populate('user', 'username displayName avatar')
+            .sort({ _id: -1 });
+
+        return res.json(cocktails);
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            message: 'Internal server error',
+        });
+    }
+};
+
+export const getMyCocktails = async (
+    req: AuthRequest,
+    res: Response,
+) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                message: 'Unauthorized',
+            });
+        }
+
+        const cocktails = await Cocktail.find({
+            user: req.user._id,
+        })
+            .populate('user', 'username displayName avatar')
+            .sort({ _id: -1 });
+
+        return res.json(cocktails);
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            message: 'Internal server error',
+        });
+    }
+};
