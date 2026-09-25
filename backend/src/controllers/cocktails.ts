@@ -101,3 +101,115 @@ export const getMyCocktails = async (
         });
     }
 };
+
+export const getCocktail = async (
+    req: AuthRequest,
+    res: Response,
+) => {
+    try {
+        const id = req.params.id;
+
+        if (Array.isArray(id)) {
+            return res.status(400).json({
+                message: 'Invalid cocktail id',
+            });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: 'Invalid cocktail id',
+            });
+        }
+
+        const cocktail = await Cocktail.findById(id)
+            .populate('user', 'username displayName avatar');
+
+        if (!cocktail) {
+            return res.status(404).json({
+                message: 'Cocktail not found',
+            });
+        }
+
+        if (!cocktail.published) {
+            if (!req.user) {
+                return res.status(401).json({
+                    message: 'Unauthorized',
+                });
+            }
+
+            const ownerId = cocktail.user instanceof mongoose.Types.ObjectId
+                ? cocktail.user
+                : (cocktail.user as unknown as { _id: mongoose.Types.ObjectId })._id;
+
+            if (
+                req.user.role !== 'admin' &&
+                !ownerId.equals(req.user._id)
+            ) {
+                return res.status(404).json({
+                    message: 'Cocktail not found',
+                });
+            }
+        }
+
+        return res.json(cocktail);
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            message: 'Internal server error',
+        });
+    }
+};
+
+export const deleteCocktail = async (
+    req: AuthRequest,
+    res: Response,
+) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                message: 'Unauthorized',
+            });
+        }
+
+        const id = req.params.id;
+
+        if (Array.isArray(id)) {
+            return res.status(400).json({
+                message: 'Invalid cocktail id',
+            });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: 'Invalid cocktail id',
+            });
+        }
+
+        const cocktail = await Cocktail.findById(id);
+
+        if (!cocktail) {
+            return res.status(404).json({
+                message: 'Cocktail not found',
+            });
+        }
+
+        if (!cocktail.user.equals(req.user._id)) {
+            return res.status(403).json({
+                message: 'You can delete only your own cocktails',
+            });
+        }
+
+        await Cocktail.findByIdAndDelete(id);
+
+        return res.json({
+            message: 'Cocktail deleted',
+        });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            message: 'Internal server error',
+        });
+    }
+};
