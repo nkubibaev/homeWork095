@@ -3,6 +3,7 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import './models/User';
 import usersRouter from './routes/users';
+import cocktailsRouter from './routes/cocktails';
 
 const app = express();
 
@@ -12,11 +13,8 @@ app.use(express.json());
 const PORT = 8000;
 const MONGODB_URL = 'mongodb://127.0.0.1:27017/cocktails';
 
-app.get('/', (_req, res) => {
-    res.send('Cocktail API is running');
-});
-
 app.use('/users', usersRouter);
+app.use('/cocktails', cocktailsRouter);
 
 const start = async () => {
     try {
