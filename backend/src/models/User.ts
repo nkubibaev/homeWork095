@@ -8,6 +8,7 @@ export interface UserFields {
     password: string;
     role: 'user' | 'admin';
     googleId?: string;
+    token?: string;
 }
 
 export type UserDocument = HydratedDocument<UserFields>;
@@ -46,6 +47,10 @@ const UserSchema = new mongoose.Schema<UserFields>(
             type: String,
             default: null,
         },
+        token: {
+            type: String,
+            default: null,
+        }
     },
     {
         versionKey: false,
