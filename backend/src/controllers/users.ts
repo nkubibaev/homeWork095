@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { User } from '../models/User';
 import { randomUUID } from 'crypto';
+import { AuthRequest } from '../middleware/auth';
 
 export const createUser = async (req: Request, res: Response) => {
     try {
@@ -116,4 +117,25 @@ export const loginUser = async (req: Request, res: Response) => {
             message: 'Internal server error',
         });
     }
+};
+
+export const getMe = async (
+    req: AuthRequest,
+    res: Response,
+) => {
+    if (!req.user) {
+        return res.status(401).json({
+            message: 'Unauthorized',
+        });
+    }
+
+    return res.json({
+        _id: req.user._id,
+        username: req.user.username,
+        displayName: req.user.displayName,
+        email: req.user.email,
+        avatar: req.user.avatar,
+        role: req.user.role,
+        googleId: req.user.googleId,
+    });
 };
