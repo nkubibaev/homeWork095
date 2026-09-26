@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface User {
     _id: string;
@@ -16,21 +17,28 @@ interface UserStore {
     logout: () => void;
 }
 
-export const useUserStore = create<UserStore>((set) => ({
-    user: null,
-    token: null,
-
-    login: (user, token) => {
-        set({
-            user,
-            token,
-        });
-    },
-
-    logout: () => {
-        set({
+export const useUserStore = create<UserStore>()(
+    persist(
+        (set) => ({
             user: null,
             token: null,
-        });
-    },
-}));
+
+            login: (user, token) => {
+                set({
+                    user,
+                    token,
+                });
+            },
+
+            logout: () => {
+                set({
+                    user: null,
+                    token: null,
+                });
+            },
+        }),
+        {
+            name: 'cocktail-user',
+        },
+    ),
+);
