@@ -1,18 +1,18 @@
-import { useState , type SubmitEvent } from 'react';
+import { useState, type SubmitEvent } from 'react';
 import { Alert, Box, Button, Container, TextField, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useUserStore } from '../store/userStore';
 
-const RegisterPage = () => {
+const LoginPage = () => {
     const navigate = useNavigate();
+    const login = useUserStore((state) => state.login);
     const [username, setUsername] = useState('');
-    const [displayName, setDisplayName] = useState('');
-    const [email, setEmail] = useState('');
-    const [avatar, setAvatar] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const submitForm = async (e: SubmitEvent) => {
+    const submitForm = async (e: SubmitEvent,
+    ) => {
         e.preventDefault();
 
         setError('');
@@ -20,7 +20,7 @@ const RegisterPage = () => {
 
         try {
             const response = await fetch(
-                'http://localhost:8000/users',
+                'http://localhost:8000/users/login',
                 {
                     method: 'POST',
                     headers: {
@@ -28,9 +28,6 @@ const RegisterPage = () => {
                     },
                     body: JSON.stringify({
                         username,
-                        displayName,
-                        email,
-                        avatar,
                         password,
                     }),
                 },
@@ -39,11 +36,13 @@ const RegisterPage = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                setError(data.message || 'Registration failed');
+                setError(data.message || 'Login failed');
                 return;
             }
 
-            navigate('/login');
+            login(data.user, data.user.token);
+
+            navigate('/');
         } catch {
             setError('Server connection error');
         } finally {
@@ -64,7 +63,7 @@ const RegisterPage = () => {
                 }}
             >
                 <Typography variant="h4">
-                    Sign up
+                    Sign in
                 </Typography>
 
                 {error && (
@@ -78,34 +77,6 @@ const RegisterPage = () => {
                     value={username}
                     onChange={(event) =>
                         setUsername(event.target.value)
-                    }
-                    required
-                />
-
-                <TextField
-                    label="Display name"
-                    value={displayName}
-                    onChange={(event) =>
-                        setDisplayName(event.target.value)
-                    }
-                    required
-                />
-
-                <TextField
-                    label="Email"
-                    type="email"
-                    value={email}
-                    onChange={(event) =>
-                        setEmail(event.target.value)
-                    }
-                    required
-                />
-
-                <TextField
-                    label="Avatar URL"
-                    value={avatar}
-                    onChange={(event) =>
-                        setAvatar(event.target.value)
                     }
                     required
                 />
@@ -125,11 +96,11 @@ const RegisterPage = () => {
                     variant="contained"
                     disabled={loading}
                 >
-                    {loading ? 'Registration...' : 'Register'}
+                    {loading ? 'Enter...' : 'Enter'}
                 </Button>
             </Box>
         </Container>
     );
 };
 
-export default RegisterPage;
+export default LoginPage;

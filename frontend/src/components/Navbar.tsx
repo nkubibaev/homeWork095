@@ -1,9 +1,11 @@
 import { AppBar, Avatar, Box, Button, Toolbar, Typography } from '@mui/material';
 import { useUserStore } from '../store/userStore';
+import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
     const user = useUserStore((state) => state.user);
     const logout = useUserStore((state) => state.logout);
+    const navigate = useNavigate();
 
     return (
         <AppBar position="static">
@@ -38,10 +40,10 @@ const Navbar = () => {
                     </Box>
                 ) : (
                     <Box>
-                        <Button color="inherit">
+                        <Button color="inherit" onClick={() => navigate('/login')}>
                             Sign in
                         </Button>
-                        <Button color="inherit">
+                        <Button color="inherit" onClick={() => navigate('/register')}>
                             Sign up
                         </Button>
                     </Box>
