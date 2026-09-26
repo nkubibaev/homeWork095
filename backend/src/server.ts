@@ -4,11 +4,14 @@ import mongoose from 'mongoose';
 import './models/User';
 import usersRouter from './routes/users';
 import cocktailsRouter from './routes/cocktails';
+import path from 'path';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
 
 const PORT = 8000;
 const MONGODB_URL = 'mongodb://127.0.0.1:27017/cocktails';

@@ -2,6 +2,8 @@ import { Response } from 'express';
 import mongoose from 'mongoose';
 import { Cocktail } from '../models/Cocktail';
 import { AuthRequest } from '../middleware/auth';
+import fs from 'fs/promises';
+import path from 'path';
 
 export const createCocktail = async (
     req: AuthRequest,
@@ -14,26 +16,50 @@ export const createCocktail = async (
             });
         }
 
-        const { name, image, recipe, ingredients } = req.body;
+        const { name, recipe, ingredients } = req.body;
 
-        if (!name || !image || !recipe || !ingredients) {
+        if (!name || !recipe || !ingredients) {
             return res.status(400).json({
                 message: 'All fields are required',
             });
         }
 
-        if (!Array.isArray(ingredients) || ingredients.length === 0) {
+        if (!req.file) {
+            return res.status(400).json({
+                message: 'Cocktail image is required',
+            });
+        }
+
+        let parsedIngredients;
+
+        try {
+            parsedIngredients =
+                typeof ingredients === 'string'
+                    ? JSON.parse(ingredients)
+                    : ingredients;
+        } catch {
+            return res.status(400).json({
+                message: 'Invalid ingredients format',
+            });
+        }
+
+        if (
+            !Array.isArray(parsedIngredients) ||
+            parsedIngredients.length === 0
+        ) {
             return res.status(400).json({
                 message: 'At least one ingredient is required',
             });
         }
 
+        const image = `/uploads/cocktails/${req.file.filename}`;
+
         const cocktail = await Cocktail.create({
-            user: new mongoose.Types.ObjectId(req.user._id),
+            user: req.user._id,
             name,
             image,
             recipe,
-            ingredients,
+            ingredients: parsedIngredients,
             published: false,
             ratings: [],
         });
@@ -201,6 +227,18 @@ export const deleteCocktail = async (
         }
 
         await Cocktail.findByIdAndDelete(id);
+
+        const imagePath = path.join(
+            process.cwd(),
+            'public',
+            cocktail.image.replace('/uploads/', 'uploads/'),
+        );
+
+        try {
+            await fs.unlink(imagePath);
+        } catch (error) {
+            console.error('Image deletion error:', error);
+        }
 
         return res.json({
             message: 'Cocktail deleted',
