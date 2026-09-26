@@ -3,6 +3,10 @@ import bcrypt from 'bcrypt';
 import { User } from '../models/User';
 import { randomUUID } from 'crypto';
 import { AuthRequest } from '../middleware/auth';
+import { OAuth2Client } from 'google-auth-library';
+
+const GOOGLE_CLIENT_ID = '350421679088-0o651u0ggm4a9fiv3femamnui5n3r5u3.apps.googleusercontent.com';
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 export const createUser = async (req: Request, res: Response) => {
     try {
@@ -138,4 +142,91 @@ export const getMe = async (
         role: req.user.role,
         googleId: req.user.googleId,
     });
+};
+
+export const googleLogin = async (
+    req: Request,
+    res: Response,
+) => {
+    try {
+        const { credential } = req.body;
+
+        if (!credential) {
+            return res.status(400).json({
+                message: 'Google credential is required',
+            });
+        }
+
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+
+        if (!payload) {
+            return res.status(400).json({
+                message: 'Invalid Google token',
+            });
+        }
+
+        const googleId = payload.sub;
+        const email = payload.email;
+
+        if (!email) {
+            return res.status(400).json({
+                message: 'Google account email is required',
+            });
+        }
+
+        let user = await User.findOne({
+            googleId,
+        });
+
+        if (!user) {
+            user = await User.findOne({
+                email,
+            });
+
+            if (user) {
+                user.googleId = googleId;
+            } else {
+                user = new User({
+                    username: email.split('@')[0],
+                    displayName: payload.name || email,
+                    email,
+                    avatar: payload.picture || '',
+                    password: randomUUID(),
+                    role: 'user',
+                    googleId,
+                });
+            }
+        }
+
+        const token = randomUUID();
+
+        user.token = token;
+
+        await user.save();
+
+        return res.json({
+            message: 'Google login successful',
+            user: {
+                _id: user._id,
+                username: user.username,
+                displayName: user.displayName,
+                email: user.email,
+                avatar: user.avatar,
+                role: user.role,
+                googleId: user.googleId,
+                token,
+            },
+        });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(401).json({
+            message: 'Invalid Google credential',
+        });
+    }
 };

@@ -2,6 +2,7 @@ import { useState, type SubmitEvent } from 'react';
 import { Alert, Box, Button, Container, TextField, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '../store/userStore';
+import {GoogleLogin} from "@react-oauth/google";
 
 const LoginPage = () => {
     const navigate = useNavigate();
@@ -98,6 +99,52 @@ const LoginPage = () => {
                 >
                     {loading ? 'Enter...' : 'Enter'}
                 </Button>
+                <GoogleLogin
+                    onSuccess={async (credentialResponse) => {
+                        if (!credentialResponse.credential) {
+                            setError('Google authentication failed');
+                            return;
+                        }
+
+                        setError('');
+                        setLoading(true);
+
+                        try {
+                            const response = await fetch(
+                                'http://localhost:8000/users/google',
+                                {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        credential: credentialResponse.credential,
+                                    }),
+                                },
+                            );
+
+                            const data = await response.json();
+
+                            if (!response.ok) {
+                                setError(
+                                    data.message || 'Google authentication failed',
+                                );
+                                return;
+                            }
+
+                            login(data.user, data.user.token);
+
+                            navigate('/');
+                        } catch {
+                            setError('Server connection error');
+                        } finally {
+                            setLoading(false);
+                        }
+                    }}
+                    onError={() => {
+                        setError('Google authentication failed');
+                    }}
+                />
             </Box>
         </Container>
     );
