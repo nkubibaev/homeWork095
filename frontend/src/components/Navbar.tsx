@@ -12,7 +12,8 @@ const Navbar = () => {
             <Toolbar>
                 <Typography
                     variant="h6"
-                    sx={{ flexGrow: 1 }}
+                    sx={{ flexGrow: 1, cursor: "pointer" }}
+                    onClick={() => navigate('/')}
                 >
                     Cocktail App
                 </Typography>

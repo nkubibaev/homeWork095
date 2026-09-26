@@ -75,41 +75,36 @@ export const createCocktail = async (
 };
 
 export const getCocktails = async (
-    req: AuthRequest,
+    _req: Request,
     res: Response,
 ) => {
     try {
-        if (!req.user) {
-            return res.status(401).json({
-                message: 'Unauthorized',
-            });
-        }
-
-        const filter = req.user.role === 'admin' ? {} : { published: true };
-
-        const cocktails = await Cocktail.find(filter)
+        const cocktails = await Cocktail.find({ published: true })
             .populate('user', 'username displayName avatar')
             .sort({ _id: -1 });
 
         const result = cocktails.map((cocktail) => {
             const ratingCount = cocktail.ratings.length;
 
-            const ratingAverage = ratingCount === 0
-                    ? 0
-                    : cocktail.ratings.reduce(
-                        (sum, item) => sum + item.rating,
-                        0,
-                    ) / ratingCount;
-
-            const userRating = cocktail.ratings.find(
-                (item) => item.userId.equals(req.user!._id),
-            )?.rating ?? null;
+            const ratingAverage =
+                ratingCount > 0
+                    ? cocktail.ratings.reduce(
+                    (sum, rating) => sum + rating.rating,
+                    0,
+                ) / ratingCount
+                    : 0;
 
             return {
-                ...cocktail.toObject(),
+                _id: cocktail._id,
+                name: cocktail.name,
+                image: cocktail.image,
+                recipe: cocktail.recipe,
+                published: cocktail.published,
+                ingredients: cocktail.ingredients,
+                user: cocktail.user,
                 ratingCount,
                 ratingAverage,
-                userRating,
+                userRating: null,
             };
         });
 

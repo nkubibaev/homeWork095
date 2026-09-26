@@ -9,7 +9,6 @@ import {
     Grid,
     Typography,
 } from '@mui/material';
-import { useUserStore } from '../store/userStore';
 import { useNavigate } from 'react-router-dom';
 
 interface Ingredient {
@@ -41,8 +40,6 @@ interface Cocktail {
 }
 
 const HomePage = () => {
-    const token = useUserStore((state) => state.token);
-
     const [cocktails, setCocktails] = useState<Cocktail[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -50,19 +47,9 @@ const HomePage = () => {
 
     useEffect(() => {
         const fetchCocktails = async () => {
-            if (!token) {
-                setLoading(false);
-                return;
-            }
-
             try {
                 const response = await fetch(
                     'http://localhost:8000/cocktails',
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    },
                 );
 
                 const data = await response.json();
@@ -81,21 +68,7 @@ const HomePage = () => {
         };
 
         fetchCocktails();
-    }, [token]);
-
-    if (!token) {
-        return (
-            <Container sx={{ mt: 5 }}>
-                <Typography variant="h4">
-                    Коктейли
-                </Typography>
-
-                <Typography sx={{ mt: 2 }}>
-                    Войдите, чтобы увидеть коктейли.
-                </Typography>
-            </Container>
-        );
-    }
+    }, []);
 
     if (loading) {
         return (
@@ -132,12 +105,16 @@ const HomePage = () => {
 
             <Grid container spacing={3}>
                 {cocktails.map((cocktail) => (
-                    <Grid key={cocktail._id} size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid
+                        key={cocktail._id}
+                        size={{ xs: 12, sm: 6, md: 4 }}
+                    >
                         <Card
                             onClick={() =>
                                 navigate(`/cocktails/${cocktail._id}`)
                             }
-                            sx={{ cursor: 'pointer' }}>
+                            sx={{ cursor: 'pointer' }}
+                        >
                             <CardMedia
                                 component="img"
                                 height="220"
