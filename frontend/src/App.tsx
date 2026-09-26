@@ -6,6 +6,7 @@ import HomePage from "./pages/HomePage.tsx";
 import CocktailPage from "./pages/CocktailPage.tsx";
 import CreateCocktailPage from "./pages/CreateCocktailPage.tsx";
 import MyCocktailsPage from "./pages/MyCocktailsPage.tsx";
+import AdminPage from "./pages/AdminPage.tsx";
 
 const App = () => {
   return (
@@ -19,6 +20,7 @@ const App = () => {
               <Route path="/cocktails/:id" element={<CocktailPage />} />
               <Route path="/cocktails/create" element={<CreateCocktailPage />} />
               <Route path="/my-cocktails" element={<MyCocktailsPage />} />
+              <Route path="/admin" element={<AdminPage />} />
           </Routes>
       </>
   );

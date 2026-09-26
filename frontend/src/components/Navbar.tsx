@@ -45,6 +45,14 @@ const Navbar = () => {
                         >
                             Мои коктейли
                         </Button>
+                        {user.role === 'admin' && (
+                            <Button
+                                color="inherit"
+                                onClick={() => navigate('/admin')}
+                            >
+                                Модерация
+                            </Button>
+                        )}
                         <Avatar src={user.avatar}>
                             {user.displayName.charAt(0)}
                         </Avatar>
