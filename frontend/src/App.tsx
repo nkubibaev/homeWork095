@@ -1,17 +1,16 @@
-import { Typography } from '@mui/material';
 import Navbar from './components/Navbar';
+import {Route, Routes} from "react-router-dom";
+import RegisterPage from "./pages/RegisterPage.tsx";
 
 const App = () => {
   return (
       <>
-        <Navbar />
+          <Navbar />
 
-        <Typography
-            variant="h4"
-            sx={{ p: 3 }}
-        >
-          Коктейли
-        </Typography>
+          <Routes>
+              <Route path="/" element={<h1>Коктейли</h1>} />
+              <Route path="/register" element={<RegisterPage />} />
+          </Routes>
       </>
   );
 };
