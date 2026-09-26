@@ -10,6 +10,7 @@ import {
     Typography,
 } from '@mui/material';
 import { useUserStore } from '../store/userStore';
+import { useNavigate } from 'react-router-dom';
 
 interface Ingredient {
     name: string;
@@ -45,6 +46,7 @@ const HomePage = () => {
     const [cocktails, setCocktails] = useState<Cocktail[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchCocktails = async () => {
@@ -131,7 +133,11 @@ const HomePage = () => {
             <Grid container spacing={3}>
                 {cocktails.map((cocktail) => (
                     <Grid key={cocktail._id} size={{ xs: 12, sm: 6, md: 4 }}>
-                        <Card>
+                        <Card
+                            onClick={() =>
+                                navigate(`/cocktails/${cocktail._id}`)
+                            }
+                            sx={{ cursor: 'pointer' }}>
                             <CardMedia
                                 component="img"
                                 height="220"
