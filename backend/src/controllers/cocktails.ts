@@ -91,7 +91,29 @@ export const getCocktails = async (
             .populate('user', 'username displayName avatar')
             .sort({ _id: -1 });
 
-        return res.json(cocktails);
+        const result = cocktails.map((cocktail) => {
+            const ratingCount = cocktail.ratings.length;
+
+            const ratingAverage = ratingCount === 0
+                    ? 0
+                    : cocktail.ratings.reduce(
+                        (sum, item) => sum + item.rating,
+                        0,
+                    ) / ratingCount;
+
+            const userRating = cocktail.ratings.find(
+                (item) => item.userId.equals(req.user!._id),
+            )?.rating ?? null;
+
+            return {
+                ...cocktail.toObject(),
+                ratingCount,
+                ratingAverage,
+                userRating,
+            };
+        });
+
+        return res.json(result);
     } catch (error) {
         console.error(error);
 
@@ -177,7 +199,27 @@ export const getCocktail = async (
             }
         }
 
-        return res.json(cocktail);
+        const ratingCount = cocktail.ratings.length;
+
+        const ratingAverage = ratingCount === 0
+                ? 0
+                : cocktail.ratings.reduce(
+                    (sum, item) => sum + item.rating,
+                    0,
+                ) / ratingCount;
+
+        const userRating = req.user
+            ? cocktail.ratings.find(
+            (item) => item.userId.equals(req.user!._id),
+        )?.rating ?? null
+            : null;
+
+        return res.json({
+            ...cocktail.toObject(),
+            ratingCount,
+            ratingAverage,
+            userRating,
+        });
     } catch (error) {
         console.error(error);
 
@@ -308,6 +350,86 @@ export const getUnpublishedCocktails = async (
             .sort({ _id: -1 });
 
         return res.json(cocktails);
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            message: 'Internal server error',
+        });
+    }
+};
+
+export const rateCocktail = async (
+    req: AuthRequest,
+    res: Response,
+) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                message: 'Unauthorized',
+            });
+        }
+
+        const id = req.params.id;
+
+        if (Array.isArray(id)) {
+            return res.status(400).json({
+                message: 'Invalid cocktail id',
+            });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: 'Invalid cocktail id',
+            });
+        }
+
+        const { rating } = req.body;
+
+        if (
+            typeof rating !== 'number' ||
+            rating < 1 ||
+            rating > 5 ||
+            !Number.isInteger(rating)
+        ) {
+            return res.status(400).json({
+                message: 'Rating must be an integer from 1 to 5',
+            });
+        }
+
+        const cocktail = await Cocktail.findById(id);
+
+        if (!cocktail) {
+            return res.status(404).json({
+                message: 'Cocktail not found',
+            });
+        }
+
+        if (!cocktail.published) {
+            return res.status(400).json({
+                message: 'You cannot rate an unpublished cocktail',
+            });
+        }
+
+        const existingRating = cocktail.ratings.find(
+            (item) => item.userId.equals(req.user!._id),
+        );
+
+        if (existingRating) {
+            existingRating.rating = rating;
+        } else {
+            cocktail.ratings.push({
+                userId: req.user._id,
+                rating,
+            });
+        }
+
+        await cocktail.save();
+
+        return res.json({
+            message: 'Rating saved',
+            rating,
+        });
     } catch (error) {
         console.error(error);
 
