@@ -220,7 +220,10 @@ export const deleteCocktail = async (
             });
         }
 
-        if (!cocktail.user.equals(req.user._id)) {
+        if (
+            req.user.role !== 'admin' &&
+            !cocktail.user.equals(req.user._id)
+        ) {
             return res.status(403).json({
                 message: 'You can delete only your own cocktails',
             });
@@ -243,6 +246,68 @@ export const deleteCocktail = async (
         return res.json({
             message: 'Cocktail deleted',
         });
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            message: 'Internal server error',
+        });
+    }
+};
+
+export const publishCocktail = async (
+    req: AuthRequest,
+    res: Response,
+) => {
+    try {
+        const { id } = req.params;
+
+        if (Array.isArray(id)) {
+            return res.status(400).json({
+                message: 'Invalid cocktail id',
+            });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: 'Invalid cocktail id',
+            });
+        }
+
+        const cocktail = await Cocktail.findById(id);
+
+        if (!cocktail) {
+            return res.status(404).json({
+                message: 'Cocktail not found',
+            });
+        }
+
+        cocktail.published = true;
+
+        await cocktail.save();
+
+        return res.json(cocktail);
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            message: 'Internal server error',
+        });
+    }
+};
+
+export const getUnpublishedCocktails = async (
+    _req: AuthRequest,
+    res: Response,
+) => {
+    try {
+        const cocktails = await Cocktail.find({
+            published: false,
+        })
+            .populate('user', 'username displayName avatar')
+            .sort({ _id: -1 });
+
+        return res.json(cocktails);
     } catch (error) {
         console.error(error);
 
