@@ -1,5 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Alert, Card, CardContent, CardMedia, CircularProgress, Container, Grid, Typography } from '@mui/material';
+import {
+    Alert,
+    Button,
+    Card,
+    CardContent,
+    CardMedia,
+    CircularProgress,
+    Container,
+    Grid,
+    Typography
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '../store/userStore';
 
@@ -72,6 +82,45 @@ const MyCocktailsPage = () => {
 
         fetchCocktails();
     }, [token]);
+
+    const deleteCocktail = async (id: string) => {
+        if (!token) {
+            return;
+        }
+
+        const confirmed = window.confirm(
+            'Вы действительно хотите удалить этот коктейль?',
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `http://localhost:8000/cocktails/${id}`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                },
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setError(data.message || 'Не удалось удалить коктейль');
+                return;
+            }
+
+            setCocktails(
+                cocktails.filter((cocktail) => cocktail._id !== id),
+            );
+        } catch {
+            setError('Ошибка соединения с сервером');
+        }
+    };
 
     if (!token) {
         return (
@@ -147,6 +196,18 @@ const MyCocktailsPage = () => {
                                             ? 'Опубликован'
                                             : 'На модерации'}
                                     </Typography>
+
+                                    <Button
+                                        color="error"
+                                        variant="outlined"
+                                        sx={{ mt: 2 }}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            deleteCocktail(cocktail._id);
+                                        }}
+                                    >
+                                        Удалить
+                                    </Button>
                                 </CardContent>
                             </Card>
                         </Grid>
