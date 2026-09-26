@@ -12,6 +12,7 @@ import {
     Typography,
 } from '@mui/material';
 import { useUserStore } from '../store/userStore';
+import Rating from '../components/Rating';
 
 interface Ingredient {
     name: string;
@@ -44,12 +45,39 @@ interface Cocktail {
 const CocktailPage = () => {
     const { id } = useParams();
     const token = useUserStore((state) => state.token);
-
-    const [cocktail, setCocktail] =
-        useState<Cocktail | null>(null);
-
+    const [cocktail, setCocktail] = useState<Cocktail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
+    const handleRatingChange = (rating: number) => {
+        if (!cocktail) {
+            return;
+        }
+
+        setCocktail({
+            ...cocktail,
+            userRating: rating,
+            ratingCount:
+                cocktail.userRating === null
+                    ? cocktail.ratingCount + 1
+                    : cocktail.ratingCount,
+            ratingAverage:
+                cocktail.userRating === null
+                    ? (
+                        (cocktail.ratingAverage *
+                            cocktail.ratingCount +
+                            rating) /
+                        (cocktail.ratingCount + 1)
+                    )
+                    : (
+                        (cocktail.ratingAverage *
+                            cocktail.ratingCount -
+                            cocktail.userRating +
+                            rating) /
+                        cocktail.ratingCount
+                    ),
+        });
+    };
 
     useEffect(() => {
         const fetchCocktail = async () => {
@@ -206,11 +234,13 @@ const CocktailPage = () => {
                     {cocktail.recipe}
                 </Typography>
 
-                {cocktail.userRating !== null && (
-                    <Typography sx={{ mt: 3 }}>
-                        Ваша оценка: {cocktail.userRating}
-                    </Typography>
-                )}
+                <Rating
+                    cocktailId={cocktail._id}
+                    value={cocktail.userRating}
+                    average={cocktail.ratingAverage}
+                    count={cocktail.ratingCount}
+                    onRatingChange={handleRatingChange}
+                />
             </Paper>
         </Container>
     );
