@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import {useNavigate, useParams} from 'react-router-dom';
 import {
     Alert,
-    Box,
+    Box, Button,
     CircularProgress,
     Container,
     List,
@@ -36,6 +36,7 @@ interface Cocktail {
     ratingAverage: number;
     userRating: number | null;
     user: {
+        _id: string;
         username: string;
         displayName: string;
         avatar: string;
@@ -45,9 +46,11 @@ interface Cocktail {
 const CocktailPage = () => {
     const { id } = useParams();
     const token = useUserStore((state) => state.token);
+    const user = useUserStore((state) => state.user);
     const [cocktail, setCocktail] = useState<Cocktail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const navigate = useNavigate();
 
     const handleRatingChange = (rating: number) => {
         if (!cocktail) {
@@ -115,6 +118,43 @@ const CocktailPage = () => {
 
         fetchCocktail();
     }, [id, token]);
+
+    const deleteCocktail = async () => {
+        if (!token || !cocktail) {
+            return;
+        }
+
+        const confirmed = window.confirm(
+            'Вы действительно хотите удалить этот коктейль?',
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `http://localhost:8000/cocktails/${cocktail._id}`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                },
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setError(data.message || 'Не удалось удалить коктейль');
+                return;
+            }
+
+            navigate('/');
+        } catch {
+            setError('Ошибка соединения с сервером');
+        }
+    };
 
     if (!token) {
         return (
@@ -241,6 +281,20 @@ const CocktailPage = () => {
                     count={cocktail.ratingCount}
                     onRatingChange={handleRatingChange}
                 />
+
+                {user &&
+                    (user.role === 'admin' ||
+                        user._id === cocktail.user._id) && (
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            sx={{ mt: 2 }}
+                            onClick={deleteCocktail}
+                        >
+                            Удалить
+                        </Button>
+                    )
+                }
             </Paper>
         </Container>
     );
