@@ -25,6 +25,26 @@ const Navbar = () => {
                             gap: 1,
                         }}
                     >
+                        <Button
+                            color="inherit"
+                            onClick={() => navigate('/')}
+                        >
+                            Коктейли
+                        </Button>
+
+                        <Button
+                            color="inherit"
+                            onClick={() => navigate('/cocktails/create')}
+                        >
+                            Добавить коктейль
+                        </Button>
+
+                        <Button
+                            color="inherit"
+                            onClick={() => navigate('/my-cocktails')}
+                        >
+                            Мои коктейли
+                        </Button>
                         <Avatar src={user.avatar}>
                             {user.displayName.charAt(0)}
                         </Avatar>
